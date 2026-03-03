@@ -111,7 +111,7 @@ export default function RoomPage() {
 
       setMessages((msgs as any) ?? []);
 
-      // Subscribe to messages changes
+      
       const sub = supabase
         .channel(`db:messages:${(r as any).id}`)
         .on(
@@ -130,7 +130,7 @@ export default function RoomPage() {
     })();
   }, [slug, nav]);
 
-  // Device listing (try to get permission once so labels appear)
+  
   useEffect(() => {
     (async () => {
       try {
@@ -150,7 +150,7 @@ export default function RoomPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // keep stream track enabled flags consistent
+  
   useEffect(() => {
     const s = localStreamRef.current;
     if (!s) return;
@@ -163,7 +163,7 @@ export default function RoomPage() {
   async function ensureParticipantRow() {
     if (!user || !room) return;
 
-    // IMPORTANT: use INSERT (not upsert) so we don’t need UPDATE rights.
+    
     const { error } = await supabase.from("room_participants").insert({
       room_id: room.id,
       user_id: user.id,
@@ -182,7 +182,7 @@ export default function RoomPage() {
     setHint("");
     setState("connecting");
 
-    // ✅ 1) Join DB first (never block join on camera)
+   
     try {
       await ensureParticipantRow();
     } catch (e: any) {
@@ -191,7 +191,7 @@ export default function RoomPage() {
       return;
     }
 
-    // ✅ 2) Create/join realtime channel (presence + signaling)
+    
     const ch = await joinRoomChannel(supabase as any, slug, user.id);
     channelRef.current = ch;
 
@@ -228,8 +228,7 @@ export default function RoomPage() {
 
     await trackPresence(ch, user.id);
 
-    // ✅ 3) Build peer connection
-    const pc = makePeerConnection();
+    const pc = await makePeerConnection();
     pcRef.current = pc;
 
     pc.onconnectionstatechange = () => {
@@ -247,7 +246,7 @@ export default function RoomPage() {
       }
     };
 
-    // ✅ 4) Remote stream always ready
+   
     const remote = new MediaStream();
     remoteStreamRef.current = remote;
     pc.ontrack = (ev) => {
@@ -255,7 +254,7 @@ export default function RoomPage() {
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remote;
     };
 
-    // ✅ 5) Try to get local media — if fails, join as viewer (receive-only)
+   
     let stream: MediaStream | null = null;
     try {
       stream = await getMedia({ videoId: camId || undefined, audioId: micId || undefined });
